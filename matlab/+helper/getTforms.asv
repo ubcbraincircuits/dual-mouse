@@ -1,0 +1,120 @@
+function [tform, tiledMaps] = getTforms(data, refIdx, plotFigs, verbose, regMethod)
+% get registration transformations for all frames in a stack
+%
+% Input:
+%   data:       (HxWxN, where [HxW] are image size & N is number of frames)
+%   refIdx:     (index of reference frame in stack: refIdx <= N)
+%   plotFigs:   (Boolean: True to show registered maps in tiled image)
+%   verbose:    (Boolean: True to print progress to command window)
+%   method:     (if 'cpregister', use control point selection method,
+%                otherwise, use default MATLAB registration)
+%
+% Output:
+%   tform:      (Cell array of transformations: length N)
+%   tiledMaps:  (Tiled image of registered maps for visualization)
+
+if nargin < 3 || isempty(refIdx), refIdx = chooseRef(data); end
+if nargin < 3 || isempty(plotFigs), plotFigs = 1; end
+if nargin < 4 || isempty(verbose), verbose = 1; end
+if nargin < 5 || isempty(regMethod), regMethod = 'default'; end
+
+
+N = size(data, 3);
+regFrames = zeros(size(data));
+tform = cell(1,N);
+
+[optimizer, metric] = imregconfig('monomodal');
+% optimizer.MaximumStepLength = 6.25e-4;
+
+if verbose
+    disp(['Reference index: ', num2str(refIdx)])
+end
+
+fixed = imadjust(data(:, :, refIdx));
+for i = 1:N
+    if i ~= refIdx
+        moving = imadjust(data(:, :, i));
+        moving = imhistmatch(moving, fixed);
+        
+%         if i == 13|| i ==14
+%             [tform{i}, movingRegistered] = cpregister(moving, fixed);
+%                 regFrames(:, :, i) = movingRegistered;
+%         else
+            tform{i} = imregtform(moving, fixed, 'similarity', ...
+                optimizer, metric);
+
+            regFrames(:, :, i) = imwarp(moving, tform{i}, ...
+                        'OutputView', imref2d(size(moving)));
+
+%         end
+    
+    else
+        tform{i} = [];
+        regFrames(:, :, i) = fixed;
+    end
+    
+    if verbose
+        disp([num2str(i),'/',num2str(N),' complete'])
+    end
+end
+
+tiledMaps = helper.tileMaps(regFrames);
+
+if plotFigs
+    figure
+    imagesc(tiledMaps)
+    colormap gray
+    grid on
+    title('Registered Frames')
+end
+
+end
+
+
+function refIdx = chooseRef(data)
+
+[H, W, ~] = size(data);
+
+% plot all maps and choose a reference
+tiledImage = tileMaps(data);
+numCols = size(tiledImage, 2) / W;
+
+f = figure; 
+imagesc(tiledImage), colormap gray
+[x, y] = ginput(1); 
+close(f);
+
+x = ceil(x/W) ;
+y = ceil(y/H);
+
+refIdx = x + (numCols*(y-1));
+end
+
+
+function [tform, movingRegistered] = cpregister(moving, fixed)
+% Generic rigid registration pipeline
+%
+% Input:       
+%           fixed, moving       (images for registration)
+% Output:       
+%           tform               (transformation matrix)
+%           movingRegistered    (registered Image)
+%
+
+
+[mp,fp] = cpselect(moving,fixed,'Wait',true);
+tformEstimate = fitgeotrans(mp,fp,'NonreflectiveSimilarity');
+% movingRegistered = imwarp(moving,tform,'OutputView',imref2d(size(fixed)));
+
+
+[optimizer, metric] = imregconfig('monomodal');
+optimizer.MaximumStepLength = 6.25e-5;
+optimizer.MaximumIterations = 100;
+
+% tform = imregtform(uint8(moving), uint8(fixed), 'similarity', optimizer, metric);
+tform = imregtform(moving, fixed, 'similarity', optimizer, metric, ...
+    'InitialTransformation', tformEstimate);
+movingRegistered = imwarp(moving,tform,'OutputView',imref2d(size(fixed)));
+
+
+end
