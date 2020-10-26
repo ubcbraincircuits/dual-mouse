@@ -667,12 +667,12 @@ def global_signal(frames):
 
 
 def draw_mask(frame):
-    plt.imshow(frame, cmap='gray', vmin=0, vmax=255)
-    roi = RoiPoly(color='r')
-    mask_left = roi.get_mask(frame)
-    mask_right = roi.get_mask(frame)
+    plt.imshow(frame, cmap='gray', vmin=0, vmax=200)
+    mask_left = RoiPoly(color='r')
+    plt.imshow(frame, cmap='gray', vmin=0, vmax=200)
+    mask_right = RoiPoly(color='b')
 
-    mask = numpy.logical_or(
+    mask = np.logical_or(
         mask_left.get_mask(frame),
         mask_right.get_mask(frame)
     )
