@@ -5,6 +5,8 @@ from scipy import signal
 from sklearn.utils import gen_even_slices
 import cv2
 import pandas
+import matplotlib.pyplot as plt
+from roipoly import RoiPoly
 
 def extract_RAW_frames(
     filename,
@@ -662,3 +664,16 @@ def global_signal(frames):
     globalsignal = numpy.matmul(mean_g, beta_g)
 
     return globalsignal, mean_g, beta_g
+
+
+def draw_mask(frame):
+    plt.imshow(frame, cmap='gray', vmin=0, vmax=255)
+    roi = RoiPoly(color='r')
+    mask_left = roi.get_mask(frame)
+    mask_right = roi.get_mask(frame)
+
+    mask = numpy.logical_or(
+        mask_left.get_mask(frame),
+        mask_right.get_mask(frame)
+    )
+    return mask
