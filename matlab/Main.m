@@ -34,7 +34,7 @@ openFrames = helper.getSingleFrames(openPath, openFiles, H, W);
 refIdx = 51;
 plotFigs = 1;
 verbose = 1;
-cpIndex = [];
+cpIndex = [13, 14, 25:28, 35, 44:45, 61, 62, 64, 67, 68];
 [tform, regMaps] = helper.getTforms(imresize(openFrames, imgResizeFactor), refIdx, plotFigs, verbose, cpIndex);
 
 %% draw mask
@@ -50,34 +50,11 @@ mask = helper.draw_roi(mean(untile(regMaps, 128), 3),2);
 % [socialData, corrs, GS, B] = helper.loadData(openPath, openFiles, tform, mask, ...
 %     'global_signal_correlation_interbrain');
 
-[socialData, corrs, GS, B] = helper.loadData(openPath, openFiles, tform, mask, ...
+[socialData, corrs, GS, B] = loadData(openPath, openFiles, tform, mask, ...
     'global_signal_correlation_interbrain_corrected');
 
 %% make figure
 helper.makeGSfig
-
-    
-%%
-
-% statistics
-t = table(CM',corrs.before,corrs.during,corrs.after,...
-'VariableNames',{'CM','t0','t2','t4'});
-Time = [0 2 4]';
-rm = fitrm(t,'t0-t4 ~ CM','WithinDesign',Time);
-anovatbl = anova(rm)
-
-% print summary
-if ~kstest(zscore(atanh(corrs.before))) && ~kstest(zscore(atanh(corrs.during))) && ~kstest(zscore(atanh(corrs.after)))
-[h,p] = ttest(atanh(corrs.before), atanh(corrs.during));
-disp(['together vs before; p=', num2str(p*3)])
-[h,p] = ttest(atanh(corrs.after), atanh(corrs.during));
-disp(['together vs after; p=', num2str(p*3)])
-[h,p] = ttest(atanh(corrs.before), atanh(corrs.after));
-disp(['before vs after; p=', num2str(p*3)])
-end
-
-[h,p] = ttest(atanh(corrs.during), atanh(duringCshuffle));
-disp(['together vs shuffle ', num2str(p)])
 
 %%
 

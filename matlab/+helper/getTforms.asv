@@ -1,4 +1,4 @@
-function [tform, tiledMaps] = getTforms(data, refIdx, plotFigs, verbose, regMethod)
+function [tform, regFrames] = getTforms(data, refIdx, plotFigs, verbose, cpIndex)
 % get registration transformations for all frames in a stack
 %
 % Input:
@@ -6,17 +6,17 @@ function [tform, tiledMaps] = getTforms(data, refIdx, plotFigs, verbose, regMeth
 %   refIdx:     (index of reference frame in stack: refIdx <= N)
 %   plotFigs:   (Boolean: True to show registered maps in tiled image)
 %   verbose:    (Boolean: True to print progress to command window)
-%   method:     (if 'cpregister', use control point selection method,
+%   cpIndex:    (Index for using control point selection method,
 %                otherwise, use default MATLAB registration)
 %
 % Output:
 %   tform:      (Cell array of transformations: length N)
-%   tiledMaps:  (Tiled image of registered maps for visualization)
+%   regFrames:  (Tiled image of registered maps for visualization)
 
 if nargin < 3 || isempty(refIdx), refIdx = chooseRef(data); end
 if nargin < 3 || isempty(plotFigs), plotFigs = 1; end
 if nargin < 4 || isempty(verbose), verbose = 1; end
-if nargin < 5 || isempty(regMethod), regMethod = 'default'; end
+if nargin < 5 || isempty(cpIndex), cpIndex = []; end
 
 
 N = size(data, 3);
@@ -24,29 +24,37 @@ regFrames = zeros(size(data));
 tform = cell(1,N);
 
 [optimizer, metric] = imregconfig('monomodal');
-% optimizer.MaximumStepLength = 6.25e-4;
+optimizer.MaximumStepLength = 6.25e-4;
 
 if verbose
     disp(['Reference index: ', num2str(refIdx)])
 end
 
-fixed = imadjust(data(:, :, refIdx));
+fixed = data(:, :, refIdx);
+fixedtmp = imadjust(helper.MM_flat(fixed), 40, 1);
 for i = 1:N
     if i ~= refIdx
-        moving = imadjust(data(:, :, i));
-        moving = imhistmatch(moving, fixed);
-        
-%         if i == 13|| i ==14
-%             [tform{i}, movingRegistered] = cpregister(moving, fixed);
-%                 regFrames(:, :, i) = movingRegistered;
-%         else
-            tform{i} = imregtform(moving, fixed, 'similarity', ...
+        moving = data(:, :, i);
+%         moving = imhistmatch(moving, fixed);
+        movingtmp = imadjust(helper.MM_flat(moving));
+
+        % Use control point registration when needed
+        if ismember(i, cpIndex)
+            [tform{i}, movingRegistered] = cpregister(moving, fixed);
+                regFrames(:, :, i) = movingRegistered;
+        else
+            tform{i} = imregtform(movingtmp, fixedtmp, 'similarity', ...
                 optimizer, metric);
+%             tformEstimate = imregtform(movingtmp, fixedtmp, 'rigid', ...
+%                 optimizer, metric);
+%             
+%             tform{i} = imregtform(movingtmp, fixedtmp, 'similarity', ...
+%                 optimizer, metric, 'InitialTransformation', tformEstimate);
 
             regFrames(:, :, i) = imwarp(moving, tform{i}, ...
                         'OutputView', imref2d(size(moving)));
 
-%         end
+        end
     
     else
         tform{i} = [];
@@ -58,11 +66,10 @@ for i = 1:N
     end
 end
 
-tiledMaps = helper.tileMaps(regFrames);
 
 if plotFigs
     figure
-    imagesc(tiledMaps)
+    imagesc(helper.tileMaps(regFrames))
     colormap gray
     grid on
     title('Registered Frames')
@@ -84,7 +91,7 @@ imagesc(tiledImage), colormap gray
 [x, y] = ginput(1); 
 close(f);
 
-x = ceil(x/W) ;
+x = ceil(x/W);
 y = ceil(y/H);
 
 refIdx = x + (numCols*(y-1));
@@ -92,26 +99,15 @@ end
 
 
 function [tform, movingRegistered] = cpregister(moving, fixed)
-% Generic rigid registration pipeline
-%
-% Input:       
-%           fixed, moving       (images for registration)
-% Output:       
-%           tform               (transformation matrix)
-%           movingRegistered    (registered Image)
-%
-
 
 [mp,fp] = cpselect(moving,fixed,'Wait',true);
 tformEstimate = fitgeotrans(mp,fp,'NonreflectiveSimilarity');
-% movingRegistered = imwarp(moving,tform,'OutputView',imref2d(size(fixed)));
 
 
 [optimizer, metric] = imregconfig('monomodal');
 optimizer.MaximumStepLength = 6.25e-5;
 optimizer.MaximumIterations = 100;
 
-% tform = imregtform(uint8(moving), uint8(fixed), 'similarity', optimizer, metric);
 tform = imregtform(moving, fixed, 'similarity', optimizer, metric, ...
     'InitialTransformation', tformEstimate);
 movingRegistered = imwarp(moving,tform,'OutputView',imref2d(size(fixed)));

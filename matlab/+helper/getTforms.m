@@ -1,4 +1,4 @@
-function [tform, tiledMaps] = getTforms(data, refIdx, plotFigs, verbose, cpIndex)
+function [tform, regFrames] = getTforms(data, refIdx, plotFigs, verbose, cpIndex)
 % get registration transformations for all frames in a stack
 %
 % Input:
@@ -11,7 +11,7 @@ function [tform, tiledMaps] = getTforms(data, refIdx, plotFigs, verbose, cpIndex
 %
 % Output:
 %   tform:      (Cell array of transformations: length N)
-%   tiledMaps:  (Tiled image of registered maps for visualization)
+%   regFrames:  (Tiled image of registered maps for visualization)
 
 if nargin < 3 || isempty(refIdx), refIdx = chooseRef(data); end
 if nargin < 3 || isempty(plotFigs), plotFigs = 1; end
@@ -30,19 +30,26 @@ if verbose
     disp(['Reference index: ', num2str(refIdx)])
 end
 
-fixed = imadjust(data(:, :, refIdx));
+fixed = data(:, :, refIdx);
+fixedtmp = imadjust(helper.MM_flat(fixed));
 for i = 1:N
     if i ~= refIdx
-        moving = imadjust(data(:, :, i));
-        moving = imhistmatch(moving, fixed);
+        moving = data(:, :, i);
+%         moving = imhistmatch(moving, fixed);
+        movingtmp = imadjust(helper.MM_flat(moving));
 
         % Use control point registration when needed
         if ismember(i, cpIndex)
             [tform{i}, movingRegistered] = cpregister(moving, fixed);
                 regFrames(:, :, i) = movingRegistered;
         else
-            tform{i} = imregtform(moving, fixed, 'similarity', ...
+            tform{i} = imregtform(movingtmp, fixedtmp, 'similarity', ...
                 optimizer, metric);
+%             tformEstimate = imregtform(movingtmp, fixedtmp, 'rigid', ...
+%                 optimizer, metric);
+%             
+%             tform{i} = imregtform(movingtmp, fixedtmp, 'similarity', ...
+%                 optimizer, metric, 'InitialTransformation', tformEstimate);
 
             regFrames(:, :, i) = imwarp(moving, tform{i}, ...
                         'OutputView', imref2d(size(moving)));
@@ -59,11 +66,10 @@ for i = 1:N
     end
 end
 
-tiledMaps = helper.tileMaps(regFrames);
 
 if plotFigs
     figure
-    imagesc(tiledMaps)
+    imagesc(helper.tileMaps(regFrames))
     colormap gray
     grid on
     title('Registered Frames')
