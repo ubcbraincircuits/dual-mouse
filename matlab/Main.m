@@ -38,7 +38,7 @@ cpIndex = [13, 14, 25:28, 35, 44:45, 61, 62, 64, 67, 68];
 [tform, regMaps] = helper.getTforms(imresize(openFrames, imgResizeFactor), refIdx, plotFigs, verbose, cpIndex);
 
 %% draw mask
-mask = helper.draw_roi(mean(untile(regMaps, 128), 3),2);
+mask = helper.draw_roi(mean(regMaps, 3),2);
 % tmp = untile(regMaps, 128);
 % mask = helper.draw_roi(tmp(:,:,13),2);
 
@@ -142,7 +142,7 @@ hold on, plot(xt(test2,fs,2), mean(test2))
 %% BEHAVIOR MODULATION
 clc
 % test = openFiles(1:2);
-[bFrames, B] = helper.loadData(openPath, openFiles, tform, maskOpen, 'behavior_modulation_corrected');
+[bFrames, B] = loadData(openPath, openFiles, tform, maskOpen, 'behavior_modulation_corrected');
 
 
 %%

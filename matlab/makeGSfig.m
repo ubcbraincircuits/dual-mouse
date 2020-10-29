@@ -66,7 +66,6 @@ axis off
 
 
 subplot(3,4,5:8), hold on
-% helper.annotateBehaviour(socialData, B, trial_num);
 gs_left_social = GS.left{trial_num}(round((90+trans_dur)*fs):end-round((90+trans_dur)*fs)); 
 gs_right_social = GS.right{trial_num}(round((90+trans_dur)*fs):end-round((90+trans_dur)*fs)); 
 gs_right_social = gs_right_social + min(gs_left_social) - max(gs_right_social);
@@ -118,17 +117,18 @@ Time = [0 2 4]';
 rm = fitrm(t,'t0-t4 ~ CM','WithinDesign',Time);
 anovatbl = anova(rm)
 
-if ~kstest(zscore(atanh(corrs.before))) && ~kstest(zscore(atanh(corrs.during))) && ~kstest(zscore(atanh(corrs.after)))
+if helper.isnormal(atanh(corrs.before)) && ...
+helper.isnormal(atanh(corrs.during)) && ...
+helper.isnormal(atanh(corrs.after))
 [h1,p] = ttest(atanh(corrs.before), atanh(corrs.during));
 disp(['together vs before; p=', num2str(p*3)])
 [h2,p] = ttest(atanh(corrs.after), atanh(corrs.during));
 disp(['together vs after; p=', num2str(p*3)])
 [h3,p] = ttest(atanh(corrs.before), atanh(corrs.after));
 disp(['before vs after; p=', num2str(p*3)])
-end
-
 [h4,p] = ttest2(atanh(corrs.during), atanh(duringCshuffle));
 disp(['together vs shuffle ', num2str(p)])
+end
 
 
 hold on
@@ -159,9 +159,12 @@ for i = 1:N
 
 %     b_left = single((B.whisk.left{i}(t1-s90:t2+s90) + B.FL.left{i}(t1-s90:t2+s90))>0);
 %     b_right = (B.whisk.left{i}(i1:i2) + B.FL.left{i}(i1:i2))>0;
+
+
         b_left = (B.whisk.left{i}(i1:i2) + B.FL.left{i}(i1:i2))>0;
         b_right = (B.whisk.right{i}(i1:i2) + B.FL.right{i}(i1:i2))>0;
-    
+
+
     
     [b_on, b_off] = helper.getBehaviourEvents(b_left);
     assert(numel(b_on) == numel(b_off), 'assertion failed');
@@ -183,6 +186,7 @@ for i = 1:N
     
     
 end
+
 
 b_dur = log10(b_dur);
 bias = ones(size(b_dur));

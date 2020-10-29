@@ -10,13 +10,13 @@ selfWhiskAvg = [];
 % selfWhiskSolo = [];
 % selfWhiskSoloAvg = [];
 durmax = 0.5;
-durmin = 0;
+durmin = 0.1;
 chooseidxanalyze = [];
 for i = 1:length(CM)
     if i == 15 || i == 27, continue; end
-    before_wcount(i) = size(bFrames.selfInitiatedWhiskLeftBefore{i},4);
+    before_wcount(i) = size(X{i}, 4);
     before_w_rate(i) = before_wcount(i)/(B.times{i}(3)/fs);
-    during_wcount(i) = size(bFrames.selfInitiatedWhiskLeftDuring{i},4);
+    during_wcount(i) = size(Y{i},4);
     during_w_rate(i) = during_wcount(i)/((B.times{i}(2)-B.times{i}(1))/fs);
 %     
 %     before_fcount(i) = size(bFrames.selfInitiatedFLLeftBefore{i},4);
@@ -198,7 +198,7 @@ for i = 1:length(idxtmp)
 %     tmp = selfWhisk(:,:,:,counter:counter+N+M-1);
     
     if idxtmp(i) == 'Y'
-        cmmapsAvg = cat(4, cmmapsAvg, selfWhiskAvg(:,:,:,2*i-1:2*i));
+        cmmapsAvg = cat(4, cmmapsAvg, selfWhiskAvg(:,:,:,2*i-1:2*i) .* mask);
 %         cmmaps = cat(4, cmmaps, partnerWhisk(:,:,:,2*i-1:2*i));
 %         cmmapssoloAvg = cat(4, cmmapssoloAvg, selfWhiskSoloAvg(:,:,:,2*i-1:2*i));
         
@@ -210,7 +210,7 @@ for i = 1:length(idxtmp)
 %         cmmaps = cat(4, cmmaps, tmp(:,:,:,[chooseidx{2*i-1}, chooseidx{2*i}]));
 %         cmmapssolo = cat(4, cmmapssolo, selfWhiskSolo(:,:,:,counter:counter+N-1));
     else
-        ncmmapsAvg = cat(4, ncmmapsAvg, selfWhiskAvg(:,:,:,2*i-1:2*i));
+        ncmmapsAvg = cat(4, ncmmapsAvg, selfWhiskAvg(:,:,:,2*i-1:2*i) .* mask);
 %         ncmmaps = cat(4, ncmmaps, partnerWhisk(:,:,:,2*i-1:2*i));
 %         ncmmapssoloAvg = cat(4,ncmmapssoloAvg, selfWhiskSoloAvg(:,:,:,2*i-1:2*i));
         
@@ -255,13 +255,8 @@ helper.uboxplot(corrs.during(CM=='Y'), corrs.during(CM=='N'));
 xticklabels({'CM', 'NCM'});
 ylabel('Inter-brain correlation')
 
-% if helper.checkNormal(pp(CMpp=='Y')) && helper.checkNormal(pp(CMpp=='N'))
-%     [h,p] = ttest2(pp(CMpp=='Y'), pp(CMpp=='N'));
-% else
-%     p = ranksum(corrs.during(CM=='Y'), corrs.during(CM=='N'));
-% end
 
-if helper.checkNormal(corrs.during(CM=='Y')) && helper.checkNormal(corrs.during(CM=='N'))
+if helper.isnormal(corrs.during(CM=='Y')) && helper.isnormal(corrs.during(CM=='N'))
     [h,p] = ttest2(corrs.during(CM=='Y'), corrs.during(CM=='N'));
 else
     p = ranksum(corrs.during(CM=='Y'), corrs.during(CM=='N'));
@@ -281,25 +276,9 @@ yticklabels({'CM', 'NCM'})
 xlabel('Time (s)')
 
 
-freezeColors
-
-
-
 cmts = squeeze(nanmedian(nanmedian(cmmapsAvg,2),1));
 ncmts = squeeze(nanmedian(nanmedian(ncmmapsAvg,2),1));
 
-% [~,cmsort] = sort(mean(cmts(30:end,:)),2);
-% [~,ncmsort] = sort(mean(ncmts(30:end,:)),2);
-% 
-% % subplot(4,3,4), imagesc(cmts(:,cmsort)'),
-% subplot(4,3,4), imagesc(cmts'),
-% caxis([-1 1]), colormap(helper.redblue)
-% title('CM'), ylabel('Trial-Averaged Global Signal'), xticks([])
-% 
-% % subplot(4,3,5), imagesc(ncmts(:,ncmsort)'), 
-% subplot(4,3,5), imagesc(ncmts'), 
-% colorbar, caxis([-1 1]), colormap(helper.redblue)
-% title('NCM'), xticks([])
 
 subplot(4,3,7), 
 plot(xt(cmts,fs,1)-1, cmts, 'color', [0.5 0.5 0.5 0.5], 'LineWidth', 0.5)
@@ -312,8 +291,8 @@ hold on, plot(xt(ncmts,fs,1)-1, mean(ncmts,2), 'k', 'LineWidth', 2)
 xlabel('Time (s)'), ylabel('\DeltaF/F_0 (z-score)'), axis([-1 1 -0.5 1])
 
 subplot(4,3,9)
-p = mean(cmts(30:end,:));
-q = mean(ncmts(30:end,:));
+p = peak2peak(cmts(30:end,:));
+q = peak2peak(ncmts(30:end,:));
 helper.uboxplot(p',q')
 title(['p=',num2str(ranksum(p,q))]),
 ylabel('mean post-whisk \DeltaF/F_0 (z-score)')
