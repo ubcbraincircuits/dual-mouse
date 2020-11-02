@@ -17,7 +17,7 @@ during_period = round((trans_dur+separate_dur)*fs):round((trans_dur+separate_dur
 
 figure, subplot(3, 4, 1)
 
-imagesc([regMaps(:,:,trial_num).*mask; regMaps(:,:,N+trial_num).*mask]);
+imagesc([regMaps(:,:,trial_num).*mask.open; regMaps(:,:,N+trial_num).*mask.open]);
 colormap gray
 yticks([64, 192])
 % yticklabels({'Stationary Mouse', 'Moving Mouse'})

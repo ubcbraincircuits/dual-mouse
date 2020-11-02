@@ -24,7 +24,7 @@ regFrames = zeros(size(data));
 tform = cell(1,N);
 
 [optimizer, metric] = imregconfig('monomodal');
-optimizer.MaximumStepLength = 6.25e-4;
+optimizer.MaximumStepLength = 6.25e-3;
 
 if verbose
     disp(['Reference index: ', num2str(refIdx)])

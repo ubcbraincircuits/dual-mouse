@@ -5,10 +5,10 @@ sum_fls = [];
 overlap = [];
 for i = 1:length(B.whisk.left)
     if ~isempty(B.whisk.left{i}) && i~=27
-        i1 = B.times{i}(1);
-        i2 = B.times{i}(2);
-        t1 = B.times{i}(3);
-        t2 = B.times{i}(4);
+        i1 = B.times(i,1);
+        i2 = B.times(i,2);
+        t1 = B.times(i,3);
+        t2 = B.times(i,4);
         
         total_time = numel(1:t1) + numel(t2:length(B.whisk.left{i}));
         
@@ -60,10 +60,10 @@ sum_fls = [];
 overlap = [];
 for i = 1:length(B.whisk.left)
     if ~isempty(B.whisk.left{i}) && i~=27
-        i1 = B.times{i}(1);
-        i2 = B.times{i}(2);
-        t1 = B.times{i}(3);
-        t2 = B.times{i}(4);
+        i1 = B.times(i,1);
+        i2 = B.times(i,2);
+        t1 = B.times(i,3);
+        t2 = B.times(i,4);
         
         total_time = numel(i1:i2);
         
@@ -98,12 +98,12 @@ for i = 1:35
         b_left = (B.whisk.left{i}(i1:i1+minute) + B.FL.left{i}(i1:i1+minute))>0;
         b_right = (B.whisk.right{i}(i1:i1+minute) + B.FL.right{i}(i1:i1+minute))>0;
         
-        tog_ji_rr = [tog_ji_rr; 1-pdist([b_left; b_right], 'jaccard')];
-        tog_ji = [tog_ji; 1-pdist([b_left; b_right]+1, 'jaccard')];
+        tog_ji_rr = [tog_ji_rr; 1-pdist(double([b_left; b_right]), 'jaccard')];
+        tog_ji = [tog_ji; 1-pdist(double([b_left; b_right])+1, 'jaccard')];
         
         b_before = (B.whisk.left{i}(t1-minute:t1) + B.FL.left{i}(t1-minute:t1))>0;
         b_after = (B.whisk.left{i}(t2:t2+minute) + B.FL.left{i}(t2:t2+minute))>0;
-        sep_ji = [sep_ji; 1-pdist([b_before; b_after], 'jaccard')];
+        sep_ji = [sep_ji; 1-pdist(double([b_before; b_after]), 'jaccard')];
     end
 end
 
@@ -142,16 +142,16 @@ for i = 1:35
     xx = cat(1, xx, tmp);
 %     
     
-    [~, tmp] = helper.CXCORR(single(B.whisk.left{i}(B.times{i}(1)-minute:B.times{i}(1))), ...
-    single(B.whisk.right{i}(B.times{i}(1):B.times{i}(1)+minute)));
-    tmp = circshift(tmp, round(numel(tmp)/2));
-    yy = cat(1,yy, tmp);
-    
-    
-    [~,tmp] = helper.CXCORR(single(B.whisk.left{i}(B.times{i}(4):B.times{i}(4)+minute)), ...
-        single(B.whisk.right{i}(B.times{i}(1):B.times{i}(1)+minute)));
-    tmp = circshift(tmp, round(numel(tmp)/2));
-    zz = cat(1,zz, tmp);
+%     [~, tmp] = helper.CXCORR(single(B.whisk.left{i}(B.times{i}(1)-minute:B.times{i}(1))), ...
+%     single(B.whisk.right{i}(B.times{i}(1):B.times{i}(1)+minute)));
+%     tmp = circshift(tmp, round(numel(tmp)/2));
+%     yy = cat(1,yy, tmp);
+%     
+%     
+%     [~,tmp] = helper.CXCORR(single(B.whisk.left{i}(B.times{i}(4):B.times{i}(4)+minute)), ...
+%         single(B.whisk.right{i}(B.times{i}(1):B.times{i}(1)+minute)));
+%     tmp = circshift(tmp, round(numel(tmp)/2));
+%     zz = cat(1,zz, tmp);
 
     
 %     [~, tmp] = helper.CXCORR(single(B.whisk.left{i}(B.times{i}(3)-minute:B.times{i}(3))), ...
@@ -167,28 +167,6 @@ for i = 1:35
     qq = cat(1, qq, tmp);
 end
 
-
-% for i = 1:35
-%     if i == 15 || i == 27, continue; end
-% 
-% 
-%     [lags,tmp]=helper.CXCORR(single(B.whisk.left{i}(B.times{i}(1):B.times{i}(1)+minute)), ...
-%         single(B.whisk.right{i}(B.times{i}(1):B.times{i}(1)+minute)));
-%     tmp = circshift(tmp, round(numel(tmp)/2));
-%     xx = cat(1, xx, tmp);
-%     
-%     
-%     for j = 1:35
-%         if j == 15 || j == 27 || j == i, continue; end
-%         [lags,tmp]=helper.CXCORR(single(B.whisk.left{i}(B.times{i}(1):B.times{i}(1)+minute)), ...
-%         single(B.whisk.right{j}(B.times{j}(1):B.times{j}(1)+minute)));
-%         tmp = circshift(tmp, round(numel(tmp)/2));
-%         qq = cat(1, qq, tmp);
-%     end
-%     
-% 
-% 
-% end
 
 
 lags = lags-lags(end)/2;

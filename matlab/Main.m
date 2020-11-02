@@ -74,18 +74,19 @@ verbose = 1;
 refIdx = 51;
 [tformOpen, regMapsOpen] = helper.getTforms(imresize(openFrames, imgResizeFactor), refIdx, plotFigs, verbose);
 %%
-refIdx = 14;
+refIdx = 9;
 [tformMesh, regMapsMesh] = helper.getTforms(imresize(meshFrames, imgResizeFactor), refIdx, plotFigs, verbose);
 %%
-refIdx = 15;
+refIdx = 21;
+cpindex = [];
 [tformOpaque, regMapsOpaque] = helper.getTforms(imresize(opaqueFrames, imgResizeFactor), refIdx, plotFigs, verbose);
 
 %% draw mask
-maskOpen = helper.draw_roi(mean(untile(regMapsOpen, 128), 3),2);
+maskOpen = helper.draw_roi(mean(regMapsOpen, 3),2);
 %%
-maskMesh = helper.draw_roi(mean(untile(regMapsMesh, 128), 3),2);
+maskMesh = helper.draw_roi(mean(regMapsMesh, 3),2);
 %%
-maskOpaque = helper.draw_roi(mean(untile(regMapsOpaque, 128), 3),2);
+maskOpaque = helper.draw_roi(mean(regMapsOpaque, 3),2);
 
 %%
 
@@ -141,8 +142,8 @@ hold on, plot(xt(test2,fs,2), mean(test2))
 
 %% BEHAVIOR MODULATION
 clc
-% test = openFiles(1:2);
-[bFrames, B] = loadData(openPath, openFiles, tform, maskOpen, 'behavior_modulation_corrected');
+% test = openFiles(3);
+bFrames = loadData(openPath, openFiles, tform.open, maskOpen, B, 'behavior_modulation_corrected');
 
 
 %%

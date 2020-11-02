@@ -19,14 +19,18 @@ bOff = squeeze(bOff);
 
 % remove events that occur within one window length of each other
 bOnIdx = ones(size(bOn));
-rw = round(window/2);
+
 for i = 1:length(bOn)-1
-    if (bOn(i) - rw <= 0) || (bOn(i+1) - bOn(i) < window) || (bOn(i) + rw > length(behaviour) )
+    if bOn(i) - round(window/2) <= 0
         bOnIdx(i) = 0;
+    elseif bOn(i+1) - bOnIdx(i) < window
+        bOn(i+1) = 0;
+    elseif bOnIdx(i+1) + round(window/2) > length(behaviour)
+        bOn(idx2) = 0;
     end
 end
 
-bOn = bOn(logical(bOnIdx));
-bOff = bOff(logical(bOnIdx));
+bOn = find(bOn == 1);
+
 
 end

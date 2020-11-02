@@ -17,7 +17,7 @@ win = round(window/2);
 
 numWhiskEvents = numel(wEvents);
 for j = 1:numWhiskEvents
-    if wEvents(j) + win > size(data,3), continue; end
+    if wEvents(j) > size(data,3)
     wFrames(:,:,:,j) = data(:, :, wEvents(j)-win: wEvents(j)+win);
 end
 
