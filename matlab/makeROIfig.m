@@ -22,7 +22,7 @@ rdrq = rMat.opaque.during(R+1:end, 1:R, :);
 rarq = rMat.opaque.after(R+1:end, 1:R, :);
 
 figure, 
-ms = helper.untile(regMapsOpen, [128 128]);
+ms = regMapsOpen;
 subplot(5,4,[1,5]), helper.show_coords(ms(:,:,refIdx), ROIs, CLopen, CRopen),
 axis off, helper.freezeColors()
 
@@ -85,34 +85,35 @@ helper.freezeColors();
 
 
 
-
+% load('self_together.mat');
+% selfleft = catcell(4,X); selfright = catcell(4, Y);
 % selfleft = catcell(4, bFrames.selfInitiatedWhiskLeftDuring([1:14,16:26,28:end]));
 % selfright = catcell(4, bFrames.selfInitiatedWhiskRightDuring([1:14,16:26,28:end]));
 % self = cat(4, selfleft, selfright);
 % clear selfleft selfright
-% 
+
 % partnerleft = catcell(4,bFrames.partnerInitiatedWhiskLeftDuring([1:14,16:26,28:end]));
 % partnerright = catcell(4,bFrames.partnerInitiatedWhiskRightDuring([1:14,16:26,28:end]));
 % partner = cat(4, partnerleft, partnerright);
 % clear partnerleft partnerright
-% 
-% smon = [];
-% for i = 1:size(self,4)
-%     smon = cat(3, smon, helper.makeMontage(self(:,:,:,i),fs));
-% end
-% 
+
+smon = [];
+for i = 1:size(self,4)
+    smon = cat(3, smon, helper.makeMontage(self(:,:,:,i),fs));
+end
+
 % pmon = [];
 % for i = 1:size(partner,4)
 %     pmon = cat(3, pmon, helper.makeMontage(partner(:,:,:,i),fs));
 % end
-% 
-% smon(smon==0) = nan;
+
+smon(smon==0) = nan;
 % pmon(pmon==0) = nan;
 
 subplot(5,4,9:12), imagesc(mean(smon,3)), colormap jet; c = colorbar;
 axis off, c.Label.String = '\DeltaF/F_0 (\sigma)';
-subplot(5,4,13:16), imagesc(mean(pmon,3)), colormap jet; c=colorbar;
-axis off, c.Label.String = '\DeltaF/F_0 (\sigma)';
+% subplot(5,4,13:16), imagesc(mean(pmon,3)), colormap jet; c=colorbar;
+% axis off, c.Label.String = '\DeltaF/F_0 (\sigma)';
 
 pmo = [squeeze(median(median(rbro,2),1)), ...
     squeeze(median(median(rdro,2),1)), ...

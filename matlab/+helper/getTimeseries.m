@@ -5,7 +5,7 @@ function timeseries = getTimeseries(data, CL, CR, radius)
 % Inputs:
 %   data        (required, image stack with frames along the 3rd dimension)
 %   CL, CR      (optional, ROI coordinates in format from get_coords)
-%   radius      (optional, px surrounding coordinate location. Default 2)
+%   radius      (optional, px surrounding coordinate location)
 
 
 if nargin == 1

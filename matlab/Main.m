@@ -90,60 +90,47 @@ maskOpaque = helper.draw_roi(mean(regMapsOpaque, 3),2);
 
 %%
 
-scale_factor = 10.25/128;
+% open single frame from all files
+openFrames = helper.getSingleFrames(openPath, openFiles, H, W);
+meshFrames = helper.getSingleFrames(meshPath, meshFiles, H, W);
+opaqueFrames = helper.getSingleFrames(opaquePath, opaqueFiles, H, W);
+
+regMapsOpen = imresize(helper.applyTform(openFrames, tform.open), 1/2);
+regMapsMesh = imresize(helper.applyTform(meshFrames, tform.mesh), 1/2);
+regMapsOpaque = imresize(helper.applyTform(opaqueFrames, tform.opaque), 1/2);
+
+%%
+scale_factor = 10/128;
 ROIs = {'M2', 'ALM', 'wM1', 'FL', 'HL', 'aBC', 'pBC', 'V1', 'RS', 'PtA'};
-[CLopen,CRopen] = get_coords(mean(untile(regMapsOpen, 128),3), scale_factor, ROIs);
-[CLmesh,CRmesh] = get_coords(mean(untile(regMapsMesh, 128),3), scale_factor, ROIs);
-[CLopaque,CRopaque] = get_coords(mean(untile(regMapsOpaque, 128),3), scale_factor, ROIs);
+[CLopen,CRopen] = helper.get_coords(mean(regMapsOpen,3), scale_factor, ROIs);
+[CLmesh,CRmesh] = helper.get_coords(mean(regMapsMesh,3), scale_factor, ROIs);
+%%
+[CLopaque,CRopaque] = helper.get_coords(mean(regMapsOpaque,3), 11/128, ROIs);
+
+%%
+
+figure, helper.show_coords(mean(regMapsOpaque,3) .* mask.opaque, ROIs, CLopaque, CRopaque)
 %%
 
 [rMat.open, leftTrace.open, rightTrace.open] = ...
-    helper.loadData(openPath, openFiles, tformOpen, maskOpen, ...
-    'roi_signal_correlation_interbrain_corrected', ROIs, CLopen, CRopen);
-%%
+    loadData(openPath, openFiles, tform.open, mask.open, B, ...
+    'roi_signal_correlation_interbrain_corrected', CLopen, CRopen);
+
 clc
 [rMat.mesh, leftTrace.mesh, rightTrace.mesh] = ...
-    helper.loadData(meshPath, meshFiles, tformMesh, maskMesh, ...
-    'barrier_controls_corrected', ROIs, CLmesh, CRmesh);
+    loadData(meshPath, meshFiles, tform.mesh, mask.mesh, B, ...
+    'barrier_controls_corrected', CLmesh, CRmesh);
 %%
-clc
+clc2
 [rMat.opaque, leftTrace.opaque, rightTrace.opaque] = ...
-    helper.loadData(opaquePath, opaqueFiles, tformOpaque, maskOpaque, ...
-    'barrier_controls_corrected', ROIs, CLopaque, CRopaque);
+    loadData(opaquePath, opaqueFiles, tform.opaque, mask.opaque, B, ...
+    'barrier_controls_corrected', CLopaque, CRopaque);
 
-%% intrabrain
-
-
-
-
-%% R by ROI
-r_by_roi = [squeeze(median(median(rbao,2),3)), ...
-    squeeze(median(median(rdao,2),3)), ...
-    squeeze(median(median(raao,2),3))]';
-figure, plot(r_by_roi)
-
-
-% r_by_roi = [squeeze(median(median(rbinter,2),3)), ...
-%     squeeze(median(median(rdinter,2),3)), ...
-%     squeeze(median(median(rainter,2),3))]';
-% figure, plot(r_by_roi)
-%%
-test = [];
-test2 = [];
-% figure
-for i = 1:23
-    test(i,:) = movcorr(leftTrace{i}(1:11818,6), rightTrace{i}(1:11818,6), round(10*fs));
-    test2(i,:) = movcorr(leftTrace{i}(1:11818,9), rightTrace{i}(1:11818,9), round(10*fs));
-%     hold on
-end
-    
-figure, plot(xt(test,fs,2), mean(test))
-hold on, plot(xt(test2,fs,2), mean(test2))
 
 %% BEHAVIOR MODULATION
 clc
 % test = openFiles(3);
-bFrames = loadData(openPath, openFiles, tform.open, maskOpen, B, 'behavior_modulation_corrected');
+bFrames = loadData(openPath, openFiles, tform.open, mask.open, B, 'behavior_modulation_corrected');
 
 
 %%

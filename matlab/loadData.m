@@ -8,6 +8,11 @@ N = length(filenames);
 fs = 28.815;
 imgResizeFactor = 1/2;
 
+i1 = B.times(1,1);
+t1 = B.times(1,3);
+t2 = B.times(1,4);
+
+minute = round(60*fs);
 
 switch analysis       
     case 'global_signal_correlation_interbrain'
@@ -32,7 +37,6 @@ switch analysis
         GS.right = cell(length(filenames),1);
 
         % check minute in each trial phase
-        minute = round(60*fs);
         s90 = round(90*fs);
         for i = 1:N
             tic
@@ -45,12 +49,6 @@ switch analysis
                 contains(unfiltFiles, 'GREEN') & ...
                 contains(unfiltFiles, 'RIGHT')};
             
-%             leftBlueFile = unfiltFiles{contains(unfiltFiles, filenames{i}(1:11)) & ...
-%                 contains(unfiltFiles, 'BLUE') & ...
-%                 contains(unfiltFiles, 'LEFT')};
-%             rightBlueFile = unfiltFiles{contains(unfiltFiles, filenames{i}(1:11)) & ...
-%                 contains(unfiltFiles, 'BLUE') & ...
-%                 contains(unfiltFiles, 'RIGHT')};
             
             lDataG = flipud(helper.open_raw([unfiltPath, leftGreenFile]) );
             rDataG = helper.open_raw([unfiltPath, rightGreenFile]);
@@ -101,8 +99,7 @@ switch analysis
         %   GS          (structure that contains global signals for left 
         %               and right mouse from 90s before translation1 start 
         %               to 90s after translation2 end)
-        %   B           (structure that contains binary vectors of
-        %               behaviour event indexes during the together period)
+
         
         % pre-allocate
         socialData.green = zeros(128, 128, 3459, N, 2);
@@ -114,15 +111,9 @@ switch analysis
         GS.right = cell(length(filenames),1);
         
         % check minute in each trial phase
-        minute = round(60*fs);
         s90 = round(90*fs);
         for i = 1:N
             tic
-            
-            i1 = B.times(i,1);
-            i2 = B.times(i,2);
-            t1 = B.times(i,3);
-            t2 = B.times(i,4);
 
             % load corrected brain data
             leftGreenFile = unfiltFiles{contains(unfiltFiles, filenames{i}(1:11)) & ...
@@ -181,17 +172,13 @@ switch analysis
         varargout{2} = C;
         varargout{3} = GS;
         
-    case 'roi_signal_correlation_interbrain'
-        minute = round(60*fs);
-                
+    case 'roi_signal_correlation_interbrain'               
         radius = 2;
         rMat = struct();
         leftTrace = cell(1,N);
         rightTrace = cell(1,N);
         
         for i = 1:N
-            load([pathname, filenames{i}],'i1','i2','t1','t2')
-            
             % load corrected brain data
             leftGreenFile = unfiltFiles{contains(unfiltFiles, filenames{i}(1:11)) & ...
                 contains(unfiltFiles, 'GREEN') & ...
@@ -200,18 +187,15 @@ switch analysis
                 contains(unfiltFiles, 'GREEN') & ...
                 contains(unfiltFiles, 'RIGHT')};
             
-%             leftBlueFile = unfiltFiles{contains(unfiltFiles, filenames{i}(1:11)) & ...
-%                 contains(unfiltFiles, 'BLUE') & ...
-%                 contains(unfiltFiles, 'LEFT')};
-%             rightBlueFile = unfiltFiles{contains(unfiltFiles, filenames{i}(1:11)) & ...
-%                 contains(unfiltFiles, 'BLUE') & ...
-%                 contains(unfiltFiles, 'RIGHT')};
             
             lDataG = flipud(helper.open_raw([unfiltPath, leftGreenFile]));
             rDataG = helper.open_raw([unfiltPath, rightGreenFile]);
             
-            [~, lDataz] = processUnfilteredData(lDataG, imgResizeFactor, tform{i}, mask);
-            [~, rDataz] = processUnfilteredData(rDataG, imgResizeFactor, tform{N+i}, mask);
+            
+            mult = 3.5;
+            filterOn = 0;
+            [~, lDataz] = processData(lDataG, imgResizeFactor, tform{i}, mask, mult, filterOn);
+            [~, rDataz] = processData(rDataG, imgResizeFactor, tform{N+i}, mask, mult, filterOn);
             
             
             leftTrace{i} = helper.getTimeseries(lDataz, CL, CR, radius);
@@ -227,17 +211,13 @@ switch analysis
         varargout{2} = leftTrace;
         varargout{3} = rightTrace;
 
-    case 'roi_signal_correlation_interbrain_corrected'
-        minute = round(60*fs);
-                
+    case 'roi_signal_correlation_interbrain_corrected'                
         radius = 2;
         rMat = struct();
         leftTrace = cell(1,N);
         rightTrace = cell(1,N);
         
-        for i = 1:N
-            load([pathname, filenames{i}],'i1', 'i2','t1','t2')
-            
+        for i = 1:N           
             % load corrected brain data
             leftGreenFile = unfiltFiles{contains(unfiltFiles, filenames{i}(1:11)) & ...
                 contains(unfiltFiles, 'GREEN') & ...
@@ -264,8 +244,9 @@ switch analysis
             lDataG = processData(lDataG, imgResizeFactor, tform{i}, mask, mult, filterOn);
             rDataG = processData(rDataG, imgResizeFactor, tform{N+i}, mask, mult, filterOn);
             
-            lDataB = processData(lDataB, imgResizeFactor, tform{i}, mask, 0.15, filterOn);
-            rDataB = processData(rDataB, imgResizeFactor, tform{N+i}, mask, 0.15, filterOn);
+            mult = 0.15;
+            lDataB = processData(lDataB, imgResizeFactor, tform{i}, mask, mult, filterOn);
+            rDataB = processData(rDataB, imgResizeFactor, tform{N+i}, mask, mult, filterOn);
             
             lDataz = zscore(lDataG - lDataB, [], 3);
             rDataz = zscore(rDataG - rDataB, [], 3);
@@ -290,25 +271,17 @@ switch analysis
         % returns:
         %   bFrames     (structure containing cell arrays of length N
         %               with 4D matrices of behavior events (HxWxTxW))
-        %   B           (structure containing cell arrays of whisking
-        %               indices)
-        
+      
         % constants
-        gaussParams = [5, 100];
-        stdmult = 1;
         window = 2; window = round(window * fs);
-        
 
         for i = 1:N
-            tic
-            
+            tic           
             % ignore trial with corrupted behaviour data
             if contains(filenames{i}, 'August-21_1123')
                 continue
             end
 
-
-            
             % --- Process brain data ---
             leftGreenFile = unfiltFiles{contains(unfiltFiles, filenames{i}(1:11)) & ...
                 contains(unfiltFiles, 'GREEN') & ...
@@ -325,16 +298,14 @@ switch analysis
 
             clear lDataG rDataG
             % --------------------------               
-            
-
-                        
+                           
             % get event initiation indices
-            wEventsBeforeLeft = helper.getWhiskEvents(B.exclusive.whiskLeftBefore{i}, window);
-            wEventsDuringLeft = helper.getWhiskEvents(B.exclusive.whiskLeftDuring{i}, window);
-            wEventsDuringRight = helper.getWhiskEvents(B.exclusive.whiskRightDuring{i}, window);
-            fEventsBeforeLeft = helper.getWhiskEvents(B.exclusive.flLeftBefore{i}, window);
-            fEventsDuringLeft = helper.getWhiskEvents(B.exclusive.flLeftDuring{i}, window);
-            fEventsDuringRight = helper.getWhiskEvents(B.exclusive.flRightDuring{i}, window);
+            wEventsBeforeLeft = helper.getBehaviourEvents(B.exclusive.whiskLeftBefore{i}, window);
+            wEventsDuringLeft = helper.getBehaviourEvents(B.exclusive.whiskLeftDuring{i}, window);
+            wEventsDuringRight = helper.getBehaviourEvents(B.exclusive.whiskRightDuring{i}, window);
+            fEventsBeforeLeft = helper.getBehaviourEvents(B.exclusive.flLeftBefore{i}, window);
+            fEventsDuringLeft = helper.getBehaviourEvents(B.exclusive.flLeftDuring{i}, window);
+            fEventsDuringRight = helper.getBehaviourEvents(B.exclusive.flRightDuring{i}, window);
             
             % self initiated maps
             bFrames.selfInitiatedWhiskLeftBefore{i} = helper.getWhiskFrames(lDataz, wEventsBeforeLeft, window);
@@ -371,10 +342,7 @@ switch analysis
 
         
         % constants
-        gaussParams = [5, 100];
-        stdmult = 1;
-        window = 2; window = round(window * fs);
-        
+        window = 2; window = round(window * fs);      
 
         for i = 1:N
             tic
@@ -383,7 +351,6 @@ switch analysis
             if i==15 || i == 27
                 continue
             end
-
             
             % --- Process brain data ---
             leftGreenFile = unfiltFiles{contains(unfiltFiles, filenames{i}(1:11)) & ...
@@ -420,11 +387,6 @@ switch analysis
 
             clear lDataG rDataG lDataB rDataB
             % --------------------------               
-            
-%             % Ensure length of brain data >= length of behaviour data
-%             bEndL = helper.limitBLength(B.whisk.left{i}, lDataz);
-%             bEndR = helper.limitBLength(B.whisk.right{i}, rDataz);
-%             
                         
             % get event initiation indices
             wEventsBeforeLeft = helper.getBehaviourEvents(B.exclusive.whiskLeftBefore{i}, window);
@@ -465,19 +427,13 @@ switch analysis
         
         
     case 'barrier_controls'
-        gaussParams = [5, 100];
-        stdmult = 1;
-        minute = round(60*fs);
-        
         radius = 2;
         rMat = struct();
         leftTrace = cell(1,N);
         rightTrace = cell(1,N);
         
         for i = 1:N
-            load([pathname, filenames{i}],'i1', 'i2', 't1', 't2', ...
-                'left_dFF', 'right_dFF', 'left_whisk', 'right_whisk', ...
-                'left_forelimb', 'right_forelimb')
+            load([pathname, filenames{i}],'left_dFF', 'right_dFF')
             
             lDataG = imrotate(permute(left_dFF, [2, 3, 1]), 90);
             rDataG = permute(right_dFF, [3, 2, 1]);
@@ -486,139 +442,57 @@ switch analysis
             [~, rDataz] = processData(rDataG, imgResizeFactor, tform{N+i}, mask); 
             
             leftTrace{i} = helper.getTimeseries(lDataz, CL, CR, radius);
-            rightTrace{i} = helper.getTimeseries(rDataz, CL, CR, radius);
-            
+            rightTrace{i} = helper.getTimeseries(rDataz, CL, CR, radius);           
 
             rMat.before(:,:,i) = corrcoef([leftTrace{i}(t1-minute:t1,:), rightTrace{i}(t1-minute:t1,:)]);
             rMat.during(:,:,i) = corrcoef([leftTrace{i}(i1:i1+minute,:), rightTrace{i}(i1:i1+minute,:)]);
             rMat.after(:,:,i)  = corrcoef([leftTrace{i}(t2:t2+minute,:), rightTrace{i}(t2:t2+minute,:)]);            
-            
-            
-            B.times{i} = [i1, i2, t1, t2];         
-            
-            % Get behaviour vectors
-            B.whisk.left{i} = getBehIdx(left_whisk, gaussParams, stdmult, size(lDataz,3));
-            B.whisk.right{i} = getBehIdx(right_whisk, gaussParams, stdmult, size(rDataz,3));
-            B.FL.left{i} = getBehIdx(left_forelimb, gaussParams, stdmult, size(lDataz,3));
-            B.FL.right{i} = getBehIdx(right_forelimb, gaussParams, stdmult, size(rDataz,3));
-            
-            % Create exclusive behaviours      
-            whiskLeft{i} = B.whisk.left{i} - B.FL.left{i};
-            whiskLeft{i} = logical(whiskLeft{i} > 0);
-            whiskRight{i} = B.whisk.right{i} - B.FL.right{i};
-            whiskRight{i} = logical(whiskRight{i} > 0);
-            
-            flLeft{i} = B.FL.left{i} - B.whisk.left{i};
-            flLeft{i} = logical(flLeft{i} > 0);
-            flRight{i} = B.FL.right{i} - B.whisk.right{i};
-            flRight{i} = logical(flRight{i} > 0);
-            
-            % Get trial phase indices
-            bIdx = zeros(size(whiskLeft{i})); bIdx(1:t1) = 1; % before
-            dIdx = zeros(size(whiskLeft{i})); dIdx(i1:i2) = 1; % during
-            
-            
-            B.exclusive.whiskLeftBefore{i} = whiskLeft{i} .* bIdx;
-            B.exclusive.whiskLeftDuring{i} = whiskLeft{i} .* dIdx;
-            B.exclusive.whiskRightDuring{i} = whiskRight{i} .* dIdx;
-            B.exclusive.flLeftBefore{i} = flLeft{i} .* bIdx;
-            B.exclusive.flLeftDuring{i} = flLeft{i} .* dIdx;
-            B.exclusive.flRightDuring{i} = flRight{i} .* dIdx; 
-            
-            
+                        
         end
         
         varargout{1} = rMat;
         varargout{2} = leftTrace;
-        varargout{3} = rightTrace;
-        varargout{7} = B;
-        
+        varargout{3} = rightTrace;     
         
     case 'barrier_controls_corrected'
-%         gaussParams = [5, 100];
-%         stdmult = 1;
-        minute = round(60*fs);
-        
         radius = 2;
         rMat = struct();
         leftTrace = cell(1,N);
         rightTrace = cell(1,N);
         
-        for i = 1:N
-%             load([pathname, filenames{i}],'i1', 'i2', 't1', 't2', ...
-%                 'left_dFF_green', 'right_dFF_green', 'left_dFF_blue', ...
-%                 'right_dFF_blue', 'left_whisk', 'right_whisk', ...
-%                 'left_forelimb', 'right_forelimb')
-            
-            load([pathname, filenames{i}],'i1', 'i2', 't1', 't2', ...
-                'left_dFF_green', 'right_dFF_green', 'left_dFF_blue', ...
+        for i = 1:N           
+            load([pathname, filenames{i}],'left_dFF_green', 'right_dFF_green', 'left_dFF_blue', ...
                 'right_dFF_blue')
             
             lDataG = imrotate(permute(left_dFF_green, [2, 3, 1]), 90);
             rDataG = permute(right_dFF_green, [3, 2, 1]);
             lDataB = imrotate(permute(left_dFF_blue, [2, 3, 1]), 90);
             rDataB = permute(right_dFF_blue, [3, 2, 1]);
-
             
             mult = 3.5;
             filterOn = 0;
-            lDataG = processData(lDataG, imgResizeFactor, tform{i}, mask, 3.5, filterOn);
-            rDataG = processData(rDataG, imgResizeFactor, tform{N+i}, mask, 3.5, filterOn);
+            lDataG = processData(lDataG, imgResizeFactor, tform{i}, mask, mult, filterOn);
+            rDataG = processData(rDataG, imgResizeFactor, tform{N+i}, mask, mult, filterOn);
             
-            lDataB = processData(lDataB, imgResizeFactor, tform{i}, mask, 0.15, filterOn);
-            rDataB = processData(rDataB, imgResizeFactor, tform{N+i}, mask, 0.15, filterOn);
+            mult = 0.15;
+            lDataB = processData(lDataB, imgResizeFactor, tform{i}, mask, mult, filterOn);
+            rDataB = processData(rDataB, imgResizeFactor, tform{N+i}, mask, mult, filterOn);
             
             lDataz = zscore(lDataG - lDataB, [], 3);
             rDataz = zscore(rDataG - rDataB, [], 3);
             
             leftTrace{i} = helper.getTimeseries(lDataz, CL, CR, radius);
             rightTrace{i} = helper.getTimeseries(rDataz, CL, CR, radius);
-            
-
-            
+                       
             rMat.before(:,:,i) = corrcoef([leftTrace{i}(t1-minute:t1,:), rightTrace{i}(t1-minute:t1,:)]);
             rMat.during(:,:,i) = corrcoef([leftTrace{i}(i1:i1+minute,:), rightTrace{i}(i1:i1+minute,:)]);
             rMat.after(:,:,i)  = corrcoef([leftTrace{i}(t2:t2+minute,:), rightTrace{i}(t2:t2+minute,:)]);            
-            
-            
-%             B.times{i} = [i1, i2, t1, t2];         
-            
-            % Get behaviour vectors
-%             B.whisk.left{i} = getBehIdx(left_whisk, gaussParams, stdmult, size(lDataz,3));
-%             B.whisk.right{i} = getBehIdx(right_whisk, gaussParams, stdmult, size(rDataz,3));
-%             B.FL.left{i} = getBehIdx(left_forelimb, gaussParams, stdmult, size(lDataz,3));
-%             B.FL.right{i} = getBehIdx(right_forelimb, gaussParams, stdmult, size(rDataz,3));
-%             
-%             % Create exclusive behaviours      
-%             whiskLeft{i} = B.whisk.left{i} - B.FL.left{i};
-%             whiskLeft{i} = logical(whiskLeft{i} > 0);
-%             whiskRight{i} = B.whisk.right{i} - B.FL.right{i};
-%             whiskRight{i} = logical(whiskRight{i} > 0);
-%             
-%             flLeft{i} = B.FL.left{i} - B.whisk.left{i};
-%             flLeft{i} = logical(flLeft{i} > 0);
-%             flRight{i} = B.FL.right{i} - B.whisk.right{i};
-%             flRight{i} = logical(flRight{i} > 0);
-%             
-%             % Get trial phase indices
-%             bIdx = zeros(size(whiskLeft{i})); bIdx(1:t1) = 1; % before
-%             dIdx = zeros(size(whiskLeft{i})); dIdx(i1:i2) = 1; % during
-%             
-%             
-%             B.exclusive.whiskLeftBefore{i} = whiskLeft{i} .* bIdx;
-%             B.exclusive.whiskLeftDuring{i} = whiskLeft{i} .* dIdx;
-%             B.exclusive.whiskRightDuring{i} = whiskRight{i} .* dIdx;
-%             B.exclusive.flLeftBefore{i} = flLeft{i} .* bIdx;
-%             B.exclusive.flLeftDuring{i} = flLeft{i} .* dIdx;
-%             B.exclusive.flRightDuring{i} = flRight{i} .* dIdx; 
-%             
-            
+                        
         end
         
         varargout{1} = rMat;
         varargout{2} = leftTrace;
         varargout{3} = rightTrace;
-
     
     otherwise
         error('Choose valid analysis type')
@@ -628,27 +502,6 @@ end
 
 end
 
-
-
-
-
-
-function idx = getBehIdx(Bvec, gaussParams, stdmult, lenBrain)
-% Get binary behaviour vector
-%   Ensure length of brain data >= length of behaviour data
-%   Smooth behaviour gradient with Gaussian kernel
-%   Threshold at mean + 1 sd
-if nargin < 2 || isempty(gaussParams), gaussParams = [5, 100]; end
-if nargin < 3 || isempty(stdmult), stdmult = 1; end
-if nargin < 4 || isempty(lenBrain), lenBrain = inf; end
-
-if length(Bvec) > lenBrain
-    Bvec = Bvec(1:lenBrain - 1);
-end
-
-smB = helper.gauss1(Bvec, gaussParams(1), gaussParams(2));
-idx = logical(smB > mean(smB) + (stdmult*std(smB)));
-end
 
 
 % function [data, dataz] = processData(data, imgResizeFactor, tform, mask)
@@ -701,8 +554,8 @@ else
     data(data>m+mult*s) = m+mult*s;
 end
 % smooth
-data = imgaussfilt(data, 1);
 data(isnan(data)) = 0;
+data = imgaussfilt(data, 1);
 
 if filterOn, data = helper.image_filter(data); end
 
@@ -710,6 +563,3 @@ if nargout > 1, dataz = zscore(data, [], 3); end
 toc
 
 end
-
-
-

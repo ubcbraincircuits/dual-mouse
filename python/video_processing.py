@@ -672,7 +672,7 @@ def draw_mask(frame):
     plt.imshow(frame, cmap='gray', vmin=0, vmax=200)
     mask_right = RoiPoly(color='b')
 
-    mask = np.logical_or(
+    mask = numpy.logical_or(
         mask_left.get_mask(frame),
         mask_right.get_mask(frame)
     )
