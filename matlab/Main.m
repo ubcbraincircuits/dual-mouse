@@ -91,18 +91,19 @@ maskOpaque = helper.draw_roi(mean(regMapsOpaque, 3),2);
 %%
 
 % open single frame from all files
-openFrames = helper.getSingleFrames(openPath, openFiles, H, W);
-meshFrames = helper.getSingleFrames(meshPath, meshFiles, H, W);
-opaqueFrames = helper.getSingleFrames(opaquePath, opaqueFiles, H, W);
+openFrames = imresize(helper.getSingleFrames(openPath, openFiles, H, W), 1/2);
+meshFrames = imresize(helper.getSingleFrames(meshPath, meshFiles, H, W), 1/2);
+opaqueFrames = imresize(helper.getSingleFrames(opaquePath, opaqueFiles, H, W), 1/2);
 
-regMapsOpen = imresize(helper.applyTform(openFrames, tform.open), 1/2);
-regMapsMesh = imresize(helper.applyTform(meshFrames, tform.mesh), 1/2);
-regMapsOpaque = imresize(helper.applyTform(opaqueFrames, tform.opaque), 1/2);
+regMapsOpen = helper.applyTform(openFrames, tform.open);
+regMapsMesh = helper.applyTform(meshFrames, tform.mesh);
+regMapsOpaque = helper.applyTform(opaqueFrames, tform.opaque);
 
 %%
 scale_factor = 10/128;
 ROIs = {'M2', 'ALM', 'wM1', 'FL', 'HL', 'aBC', 'pBC', 'V1', 'RS', 'PtA'};
 [CLopen,CRopen] = helper.get_coords(mean(regMapsOpen,3), scale_factor, ROIs);
+%%
 [CLmesh,CRmesh] = helper.get_coords(mean(regMapsMesh,3), scale_factor, ROIs);
 %%
 [CLopaque,CRopaque] = helper.get_coords(mean(regMapsOpaque,3), 11/128, ROIs);
@@ -121,7 +122,7 @@ clc
     loadData(meshPath, meshFiles, tform.mesh, mask.mesh, B, ...
     'barrier_controls_corrected', CLmesh, CRmesh);
 %%
-clc2
+clc
 [rMat.opaque, leftTrace.opaque, rightTrace.opaque] = ...
     loadData(opaquePath, opaqueFiles, tform.opaque, mask.opaque, B, ...
     'barrier_controls_corrected', CLopaque, CRopaque);

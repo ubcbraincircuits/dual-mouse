@@ -111,6 +111,11 @@ subplot(4,3,12)
 boxplot([tog_ji_rr, sep_ji]), ylabel('Intersection Over Union'), axis([0.25 2.75 0 0.5])
 xticklabels({'Social', 'Solo'});
 
+if helper.isnormal(tog_ji_rr) && helper.isnormal(sep_ji)
+    [p,h] = ttest(tog_ji_rr, sep_ji);
+else
+    [p,h] = signrank(tog_ji_rr, sep_ji);
+end
 
 
 
@@ -124,38 +129,41 @@ maxlags = round(20*fs);
 for i = 1:35
     if i == 15 || i == 27, continue; end
     
-    i1 = B.times{i}(1);
-    t1 = B.times{i}(3);
-    t2 = B.times{i}(4);
+    i1 = B.times(i,1);
+    t1 = B.times(i,3);
+    t2 = B.times(i,4);
 
 
-%     [lags,tmp]=helper.CXCORR(single(B.whisk.left{i}(B.times{i}(1):B.times{i}(1)+minute)), ...
-%         single(B.whisk.right{i}(B.times{i}(1):B.times{i}(1)+minute)));
+%     [lags,tmp]=helper.CXCORR(single(B.whisk.left{i}(B.times(i,1):B.times(i,1)+minute)), ...
+%         single(B.whisk.right{i}(B.times(i,1):B.times(i,1)+minute)));
 %     tmp = circshift(tmp, round(numel(tmp)/2));
 %     xx = cat(1, xx, tmp);
 
     l = ((B.FL.left{i}(i1:i1+minute)) + (B.whisk.left{i}(i1:i1+minute)))>0;
     r = ((B.FL.right{i}(i1:i1+minute)) + (B.whisk.right{i}(i1:i1+minute)))>0;
 
+    
     [lags,tmp]=helper.CXCORR(single(l),single(r));
-    tmp = circshift(tmp, round(numel(tmp)/2));
+    
+    ctr = round(numel(tmp)/2)
+    tmp = circshift(tmp, ctr);
     xx = cat(1, xx, tmp);
 %     
     
-%     [~, tmp] = helper.CXCORR(single(B.whisk.left{i}(B.times{i}(1)-minute:B.times{i}(1))), ...
-%     single(B.whisk.right{i}(B.times{i}(1):B.times{i}(1)+minute)));
+%     [~, tmp] = helper.CXCORR(single(B.whisk.left{i}(B.times(i,1)-minute:B.times(i,1))), ...
+%     single(B.whisk.right{i}(B.times(i,1):B.times(i,1)+minute)));
 %     tmp = circshift(tmp, round(numel(tmp)/2));
 %     yy = cat(1,yy, tmp);
 %     
 %     
-%     [~,tmp] = helper.CXCORR(single(B.whisk.left{i}(B.times{i}(4):B.times{i}(4)+minute)), ...
-%         single(B.whisk.right{i}(B.times{i}(1):B.times{i}(1)+minute)));
+%     [~,tmp] = helper.CXCORR(single(B.whisk.left{i}(B.times(i,4):B.times(i,4)+minute)), ...
+%         single(B.whisk.right{i}(B.times(i,1):B.times(i,1)+minute)));
 %     tmp = circshift(tmp, round(numel(tmp)/2));
 %     zz = cat(1,zz, tmp);
 
     
-%     [~, tmp] = helper.CXCORR(single(B.whisk.left{i}(B.times{i}(3)-minute:B.times{i}(3))), ...
-%         single(B.whisk.left{i}(B.times{i}(4):B.times{i}(4)+minute)));
+%     [~, tmp] = helper.CXCORR(single(B.whisk.left{i}(B.times(i,3)-minute:B.times(i,3))), ...
+%         single(B.whisk.left{i}(B.times(i,4):B.times(i,4)+minute)));
 %     tmp = circshift(tmp, round(numel(tmp)/2));
 %     qq = cat(1, qq, tmp);
 
@@ -163,10 +171,13 @@ for i = 1:35
     r = ((B.FL.left{i}(t2:t2+minute)) + (B.whisk.left{i}(t2:t2+minute)))>0;
 
     [~, tmp] = helper.CXCORR(single(l), single(r));
-    tmp = circshift(tmp, round(numel(tmp)/2));
+    tmp = circshift(tmp, ctr);
     qq = cat(1, qq, tmp);
 end
 
+if helper.isnormal(qq(:, ctr)) && helper.isnormal(xx(:,ctr))
+    [h,p] = ttest(qq(:,ctr), xx(:,ctr))
+end
 
 
 lags = lags-lags(end)/2;

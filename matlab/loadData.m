@@ -538,7 +538,7 @@ if ~isempty(tform)
 end
 
 % apply mask
-data =  bsxfun(@times, data, cast(mask, 'like', data));
+data =  double(bsxfun(@times, data, cast(mask, 'like', data)));
 
 
 
@@ -557,7 +557,7 @@ end
 data(isnan(data)) = 0;
 data = imgaussfilt(data, 1);
 
-if filterOn, data = helper.image_filter(data); end
+if filterOn, data = single(helper.image_filter(data)); end
 
 if nargout > 1, dataz = zscore(data, [], 3); end
 toc

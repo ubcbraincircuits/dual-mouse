@@ -78,6 +78,10 @@ patch([1.5, 2.5, 2.5, 1.5], [yL(1), yL(1), yL(2), yL(2)], 'green', 'FaceAlpha', 
 set(gca,'children',flipud(get(gca,'children')))
 % xticklabels({'Separate1','Together','Seperate2', 'Together Shuffled'})
 xtickangle(30)
+
+ROIstmp = cat(2, {''}, ROIs);
+
+legend(ROIstmp)
 ylabel('Avg r x ROI')
 xlabel(' ')
 helper.freezeColors();
@@ -85,35 +89,35 @@ helper.freezeColors();
 
 
 
-% load('self_together.mat');
-% selfleft = catcell(4,X); selfright = catcell(4, Y);
-% selfleft = catcell(4, bFrames.selfInitiatedWhiskLeftDuring([1:14,16:26,28:end]));
-% selfright = catcell(4, bFrames.selfInitiatedWhiskRightDuring([1:14,16:26,28:end]));
-% self = cat(4, selfleft, selfright);
-% clear selfleft selfright
+load('self_together.mat');
+selfleft = catcell(4,X([1:14,16:26,28:end])); 
+selfright = catcell(4, Y([1:14,16:26,28:end]));
+self = cat(4, selfleft, selfright);
+clear selfleft selfright
 
-% partnerleft = catcell(4,bFrames.partnerInitiatedWhiskLeftDuring([1:14,16:26,28:end]));
-% partnerright = catcell(4,bFrames.partnerInitiatedWhiskRightDuring([1:14,16:26,28:end]));
-% partner = cat(4, partnerleft, partnerright);
-% clear partnerleft partnerright
+load('partner_together.mat')
+partnerleft = catcell(4,X([1:14,16:26,28:end])); 
+partnerright = catcell(4, Y([1:14,16:26,28:end]));
+partner = cat(4, partnerleft, partnerright);
+clear partnerleft partnerright
 
 smon = [];
 for i = 1:size(self,4)
     smon = cat(3, smon, helper.makeMontage(self(:,:,:,i),fs));
 end
 
-% pmon = [];
-% for i = 1:size(partner,4)
-%     pmon = cat(3, pmon, helper.makeMontage(partner(:,:,:,i),fs));
-% end
+pmon = [];
+for i = 1:size(partner,4)
+    pmon = cat(3, pmon, helper.makeMontage(partner(:,:,:,i),fs));
+end
 
 smon(smon==0) = nan;
-% pmon(pmon==0) = nan;
+pmon(pmon==0) = nan;
 
 subplot(5,4,9:12), imagesc(mean(smon,3)), colormap jet; c = colorbar;
 axis off, c.Label.String = '\DeltaF/F_0 (\sigma)';
-% subplot(5,4,13:16), imagesc(mean(pmon,3)), colormap jet; c=colorbar;
-% axis off, c.Label.String = '\DeltaF/F_0 (\sigma)';
+subplot(5,4,13:16), imagesc(mean(pmon,3)), colormap jet; c=colorbar;
+axis off, c.Label.String = '\DeltaF/F_0 (\sigma)';
 
 pmo = [squeeze(median(median(rbro,2),1)), ...
     squeeze(median(median(rdro,2),1)), ...
@@ -130,6 +134,19 @@ xtickangle(30)
 ylabel('Avg r')
 xlabel(' ')
 title('open')
+
+
+% statistics
+t = table(CM',pmo(:,1), pmo(:,2), pmo(:,3),...
+'VariableNames',{'CM','t0','t2','t4'});
+Time = [0 2 4]';
+rm = fitrm(t,'t0-t4 ~ CM','WithinDesign',Time);
+anovatbl = anova(rm)
+if helper.isnormal(pmo(:,1)) && helper.isnormal(pmo(:,2)) && helper.isnormal(pmo(:,3))
+    [~,p] = ttest2(pmo(:,1), pmo(:,2))
+    [~,p] = ttest2(pmo(:,3), pmo(:,2))
+    [~,p] = ttest2(pmo(:,1), pmo(:,3))
+end
 
 
 pmm = [squeeze(median(median(rbrm,2),1)), ...
@@ -154,6 +171,19 @@ pmq = [squeeze(median(median(rbrq,2),1)), ...
 subplot(5,4,19), hold on, plot(mean(pmq), 'k', 'LineWidth', 1), axis([0.75 3.25 -0.4 0.8])
 plot(pmq', 'LineWidth', 0.5, 'Color', [0.5 0.5 0.5 0.5]), 
 
+
+t = table(pmq(:,1), pmq(:,2), pmq(:,3),...
+'VariableNames',{'t0','t2','t4'});
+Time = [0 2 4]';
+rm = fitrm(t,'t0-t4','WithinDesign',Time);
+anovatbl = anova(rm)
+if helper.isnormal(pmq(:,1)) && helper.isnormal(pmq(:,2)) && helper.isnormal(pmq(:,3))
+    disp('--opaque--')
+    [~,p] = ttest2(pmq(:,1), pmq(:,2))
+    [~,p] = ttest2(pmq(:,3), pmq(:,2))
+    [~,p] = ttest2(pmq(:,1), pmq(:,3))
+end
+
 title('opaque')
 yL = get(gca, 'YLim');
 patch([1.5, 2.5, 2.5, 1.5], [yL(1), yL(1), yL(2), yL(2)], 'green', 'FaceAlpha', 0.25, 'EdgeColor', 'None')
@@ -162,3 +192,10 @@ set(gca,'children',flipud(get(gca,'children')))
 xtickangle(30)
 ylabel('Avg r')
 xlabel(' ')
+
+if helper.isnormal(pmm(:,1)) && helper.isnormal(pmm(:,2)) && helper.isnormal(pmm(:,3))
+    disp('--mesh--')
+    [~,p] = ttest2(pmm(:,1), pmm(:,2))
+    [~,p] = ttest2(pmm(:,3), pmm(:,2))
+    [~,p] = ttest2(pmm(:,1), pmm(:,3))
+end

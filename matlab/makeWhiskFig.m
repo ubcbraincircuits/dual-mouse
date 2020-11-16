@@ -21,6 +21,8 @@ for i = 1:length(CM)
 
     
     [wOn, wOff] = helper.getBehaviourEvents(B.exclusive.whiskLeftDuring{i}, window); % get all whisk events
+%     [wOn, wOff] = helper.getBehaviourEvents(B.exclusive.whiskLeftBefore{i}, window); % get all whisk events
+
     dur = (wOff-wOn)/fs;
     chooseidx = (dur <= durmax & dur >= durmin);
     chooseidxanalyze = [chooseidxanalyze, [sum(chooseidx); sum(chooseidx)/numel(chooseidx)]];
@@ -31,6 +33,8 @@ for i = 1:length(CM)
         mean(tmp(:,:,1:29,:),3),4));
     
     [wOn, wOff] = helper.getBehaviourEvents(B.exclusive.whiskRightDuring{i}, window); % get all whisk events
+%     [wOn, wOff] = helper.getBehaviourEvents(B.exclusive.whiskLeftAfter{i}, window); % get all whisk events
+
     dur = (wOff-wOn)/fs;
 
     chooseidx = (dur <= durmax & dur >= durmin);
@@ -156,7 +160,7 @@ subplot(4,3,4:6)
 montage = [helper.makeMontage(nanmean(cmmapsAvg,4),fs); 
     helper.makeMontage(nanmean(ncmmapsAvg,4), fs)];
 imagesc(montage);
-colorbar; caxis([-0.1 0.4]); colormap jet;
+colorbar; caxis([-0.3 0.3]); colormap jet;
 xticks(64:128:size(montage,2))
 yticks(64:128:size(montage,1))
 xticklabels({'-1', '-0.78', '-0.56', '-0.33', '-0.11', '0.11', '0.33', '0.56', '0.78', '1'})

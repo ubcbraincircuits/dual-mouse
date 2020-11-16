@@ -24,42 +24,77 @@ regFrames = zeros(size(data));
 tform = cell(1,N);
 
 [optimizer, metric] = imregconfig('monomodal');
-optimizer.MaximumStepLength = 6.25e-3;
+optimizer.MaximumStepLength = 1e-2;
 
 if verbose
     disp(['Reference index: ', num2str(refIdx)])
 end
 
 fixed = data(:, :, refIdx);
-fixedtmp = imadjust(helper.MM_flat(fixed));
+fixedtmp = helper.MM_flat(fixed);
 for i = 1:N
     if i ~= refIdx
-        moving = data(:, :, i);
-%         moving = imhistmatch(moving, fixed);
-        movingtmp = imadjust(helper.MM_flat(moving));
+        flag = 1;
+        useCP = false;
+        while flag == 1
+            moving = data(:, :, i);
+    %         moving = imhistmatch(moving, fixed);
+            movingtmp = helper.MM_flat(moving);
 
-        % Use control point registration when needed
-        if ismember(i, cpIndex)
-            [tform{i}, movingRegistered] = cpregister(moving, fixed);
-                regFrames(:, :, i) = movingRegistered;
-        else
-            tform{i} = imregtform(movingtmp, fixedtmp, 'similarity', ...
-                optimizer, metric);
-%             tformEstimate = imregtform(movingtmp, fixedtmp, 'rigid', ...
-%                 optimizer, metric);
-%             
-%             tform{i} = imregtform(movingtmp, fixedtmp, 'similarity', ...
-%                 optimizer, metric, 'InitialTransformation', tformEstimate);
+            % Use control point registration when needed
+            if useCP
+                tform{i} = cpregister(movingtmp, fixedtmp);
+                regFrames(:, :, i) = imwarp(moving, tform{i}, ...
+                            'OutputView', imref2d(size(moving)));
+            else
+                tform{i} = imregtform(movingtmp, fixedtmp, 'similarity', ...
+                    optimizer, metric);
+    %             tformEstimate = imregtform(movingtmp, fixedtmp, 'rigid', ...
+    %                 optimizer, metric);
+    %             
+    %             tform{i} = imregtform(movingtmp, fixedtmp, 'similarity', ...
+    %                 optimizer, metric, 'InitialTransformation', tformEstimate);
 
-            regFrames(:, :, i) = imwarp(moving, tform{i}, ...
-                        'OutputView', imref2d(size(moving)));
+                regFrames(:, :, i) = imwarp(moving, tform{i}, ...
+                            'OutputView', imref2d(size(moving)));
 
+            end
+            
+            
+            h = figure('Position',[100 100 1500 800]);
+            subplot(2,3,1:2), imshowpair(fixed, moving, 'montage')
+            ylabel('Before registration')
+            subplot(2,3,3),  imshowpair(fixed, moving)
+            
+            subplot(2,3,4:5), imshowpair(fixed, regFrames(:,:,i), 'montage')
+            ylabel('After registration')
+            subplot(2,3,6),  imshowpair(fixed, regFrames(:,:,i))
+            
+            % Prompt user to evaluate ROI placement
+            answer = questdlg('Try again using control point registration?', ...
+                'Attention', ...
+                'Yes','No','Cancel','Cancel');
+
+            switch answer
+                case 'Yes'
+                    flag = 1;
+                    useCP = true;
+                    close(h)
+                case 'No'
+                    flag = 0;
+                    close(h)
+                case 'Cancel'
+                    error("Operation terminated by user.")
+            end
         end
     
     else
         tform{i} = [];
         regFrames(:, :, i) = fixed;
     end
+    
+    
+   
     
     if verbose
         disp([num2str(i),'/',num2str(N),' complete'])

@@ -17,7 +17,7 @@ during_period = round((trans_dur+separate_dur)*fs):round((trans_dur+separate_dur
 
 figure, subplot(3, 4, 1)
 
-imagesc([regMaps(:,:,trial_num).*mask.open; regMaps(:,:,N+trial_num).*mask.open]);
+imagesc([single(regMaps(:,:,trial_num)).*mask.open; single(regMaps(:,:,N+trial_num)).*mask.open]);
 colormap gray
 yticks([64, 192])
 % yticklabels({'Stationary Mouse', 'Moving Mouse'})
@@ -70,15 +70,15 @@ gs_left_social = GS.left{trial_num}(round((90+trans_dur)*fs):end-round((90+trans
 gs_right_social = GS.right{trial_num}(round((90+trans_dur)*fs):end-round((90+trans_dur)*fs)); 
 gs_right_social = gs_right_social + min(gs_left_social) - max(gs_right_social);
 
-helper.makeEthogram(B.whisk.left{trial_num}(B.times{trial_num}(1):B.times{trial_num}(2)), ...
+helper.makeEthogram(B.whisk.left{trial_num}(B.times(trial_num,1):B.times(trial_num,2)), ...
     'magenta', fs, [min(gs_left_social), max(gs_left_social)], 0.5);
-helper.makeEthogram(B.FL.left{trial_num}(B.times{trial_num}(1):B.times{trial_num}(2)), ...
+helper.makeEthogram(B.FL.left{trial_num}(B.times(trial_num,1):B.times(trial_num,2)), ...
     'cyan', fs, [min(gs_left_social), max(gs_left_social)], 0.5);
 plot(xt(gs_left_social,fs), gs_left_social, 'k'), 
 
-helper.makeEthogram(B.whisk.right{trial_num}(B.times{trial_num}(1):B.times{trial_num}(2)), ...
+helper.makeEthogram(B.whisk.right{trial_num}(B.times(trial_num,1):B.times(trial_num,2)), ...
     'magenta', fs, [min(gs_right_social), max(gs_right_social)], 0.5);
-helper.makeEthogram(B.FL.right{trial_num}(B.times{trial_num}(1):B.times{trial_num}(2)), ...
+helper.makeEthogram(B.FL.right{trial_num}(B.times(trial_num,1):B.times(trial_num,2)), ...
     'cyan', fs, [min(gs_right_social), max(gs_right_social)], 0.5);
 plot(xt(gs_right_social,fs), gs_right_social, 'k'), 
 
@@ -152,8 +152,8 @@ b_dff = [];
 % crop behavior traces to 90s before and after translation
 for i = 1:N
     if i == 15 || i == 27, continue; end
-    i1 = B.times{i}(1);
-    i2 = B.times{i}(2);
+    i1 = B.times(i,1);
+    i2 = B.times(i,2);
     gs_left_social = GS.left{i}(round((90+trans_dur)*fs)-1:end-round((90+trans_dur)*fs)+1);
     gs_right_social = GS.right{i}(round((90+trans_dur)*fs)-1:end-round((90+trans_dur)*fs)+1);
 
@@ -166,7 +166,7 @@ for i = 1:N
 
 
     
-    [b_on, b_off] = helper.getBehaviourEvents(b_left);
+    [b_on, b_off] = helper.getBehaviourEvents(b_left, 0);
     assert(numel(b_on) == numel(b_off), 'assertion failed');
     for j = 1:length(b_on)
         b_dur = [b_dur; (b_off(j)-b_on(j))./fs];
@@ -175,7 +175,7 @@ for i = 1:N
         assert(numel(b_dur) == numel(b_dff), [num2str(i),'   ', num2str(j)])
     end
     
-    [b_on, b_off] = helper.getBehaviourEvents(b_right);
+    [b_on, b_off] = helper.getBehaviourEvents(b_right, 0);
     assert(numel(b_on) == numel(b_off), 'assertion failed');
     for j = 1:length(b_on)
         b_dur = [b_dur; (b_off(j)-b_on(j))./fs];
