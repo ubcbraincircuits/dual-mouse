@@ -2,7 +2,7 @@ function [bOn, bOff] = getBehaviourEvents(behaviour, window)
 bOn = find(diff(behaviour) == 1);
 bOff = find(diff(behaviour) == -1);
 
-
+if numel(bOff) > 0 && numel(bOn) > 0
 
 while bOff(1) < bOn(1)
     bOff(1) = [];
@@ -13,7 +13,7 @@ end
 
 bOn = squeeze(bOn);
 bOff = squeeze(bOff);
-
+end
 
 
 
