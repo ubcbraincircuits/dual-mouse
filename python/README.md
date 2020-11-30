@@ -1,11 +1,13 @@
-# Static Renderings of These Notebooks
-___
+# List of scripts:
 
-## [Dual Imaging](https://nbviewer.jupyter.org/urls/bitbucket.org/ashubhudia/lab/raw/6429f1665d82dd350b5beb0a5c37a08f0dabfbf4/FEDCODE/Dual_Imaging/Dual_Imaging.ipynb)
-#### Processing videos for dual imaging experiments with behavioral footage
+**Dual_Imaging.ipynb**
+- Processing raw videos for dual imaging experiments
 
-## [Whisker Stimulation](https://nbviewer.jupyter.org/urls/bitbucket.org/ashubhudia/lab/raw/6429f1665d82dd350b5beb0a5c37a08f0dabfbf4/FEDCODE/Dual_Imaging/Whisker%20Stimulation.ipynb)
-#### Processing videos for dual imaging experiments, plotting brain activity in stimulation ROI
+**data_py2mat.py**
+- Processing behavior videos and compiling data into .mat files
 
-## [Generate Correlation Matrix](https://nbviewer.jupyter.org/urls/bitbucket.org/ashubhudia/lab/raw/cc4b42d04c02afde5de5f0f0e7e0a36084cc22e1/FEDCODE/Dual_Imaging/Correlation%20Matrix%20Analysis.ipynb)
-#### Generate correlation matrices for dual imagine experiment using seed pixels
+**brain_imager.py**
+- Code to image brain activity using Raspberry Pi
+
+**behaviour_client.py**
+- Code to image behaviour using Raspberry Pi
