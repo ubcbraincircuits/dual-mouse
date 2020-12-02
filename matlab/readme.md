@@ -7,4 +7,4 @@
 - This script loads and processes relevant data from pre-processed datasets. Outputs from _loadData.m_ are used to generate figures
   
 **make...Figure.m**
-- These scripts make figures associated with the corresponding figures. They can be ran after loading the processed data [here](https://osf.io/afuzn/)
+- These scripts make figures associated with the corresponding figures. All figure generation scripts are stand-alone scripts and can be run after loading the processed data [here](https://osf.io/afuzn/)
