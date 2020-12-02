@@ -1,23 +1,37 @@
 %% Script for making global signal correlation figure
-load('B:\Social_Outputs\Matlab\social\global_signal_corrected.mat')
+
+clc, clear
+
+load('singleFrames.mat')
+load('mask.mat')
+load('behavior_data.mat')
+load('tforms.mat')
+load('GSdata.mat')
+
+
+
+
 trial_num = 1;
 
-%% --- do not change ---
-openPath = 'B:\Social_Outputs\Matlab\social\behavior_added\'; 
-openFiles = helper.getAllFiles(openPath);
+
+
 fs = 28.815;
+CM = ['Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', ...
+    'Y', 'Y', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'Y', ...
+    'Y', 'Y', 'Y', 'Y', 'N', 'Y', 'N', 'Y', 'N', 'N', ...
+    'Y', 'N', 'N', 'N', 'N'];
 trans_dur = 27.5;
 together_dur = 120;
 separate_dur = 90;
-N = numel(openFiles);
+N = size(openFrames,3)/2;
 during_period = round((trans_dur+separate_dur)*fs):round((trans_dur+separate_dur+together_dur)*fs);
 % ---               ---
 
-%% 
+
 
 figure, subplot(3, 4, 1)
 
-imagesc([single(regMaps(:,:,trial_num)).*mask.open; single(regMaps(:,:,N+trial_num)).*mask.open]);
+imagesc([single(regMapsOpen(:,:,trial_num)).*mask.open; single(regMapsOpen(:,:,N+trial_num)).*mask.open]);
 colormap gray
 yticks([64, 192])
 % yticklabels({'Stationary Mouse', 'Moving Mouse'})

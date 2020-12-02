@@ -1,6 +1,19 @@
 %% roi_figure
 
 
+load('ROIdata.mat')
+load('mask.mat')
+load('behavior_data.mat')
+load('tforms.mat')
+load('singleFrames.mat')
+
+
+fs = 28.815;
+CM = ['Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', ...
+    'Y', 'Y', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'Y', ...
+    'Y', 'Y', 'Y', 'Y', 'N', 'Y', 'N', 'Y', 'N', 'N', ...
+    'Y', 'N', 'N', 'N', 'N'];
+
 R = numel(ROIs);
 refIdx = 51;
 rbao = rMat.open.before(1:R,1:R,:);
@@ -55,6 +68,20 @@ xlabel(' ')
 % colorbar, caxis([0.4 1])
 % xticks(1:size(rbintra,2)); xticklabels(ROIs); xtickangle(90)
 % yticks(1:size(rbintra,1)); yticklabels(ROIs);
+
+region = 1:10;
+t = table(region', r_by_roi(1,:)', r_by_roi(2,:)', r_by_roi(3,:)',...
+'VariableNames',{'region','t0','t2','t4'});
+Time = [0 2 4]';
+rm = fitrm(t,'t0-t4 ~ region','WithinDesign',Time);
+anovatbl = anova(rm)
+if helper.isnormal(r_by_roi(1,:)') && helper.isnormal(r_by_roi(2,:)') && helper.isnormal(r_by_roi(3,:)')
+    [~,p] = ttest2(r_by_roi(1,:)', r_by_roi(2,:)')
+    [~,p] = ttest2(r_by_roi(3,:)', r_by_roi(2,:)')
+    [~,p] = ttest2(r_by_roi(1,:)', r_by_roi(3,:)')
+end
+
+
  
 subplot(5,4,2), imagesc(mean(rbro,3)), %colormap jet; 
 colorbar, caxis([0 0.5])
@@ -171,11 +198,11 @@ pmq = [squeeze(median(median(rbrq,2),1)), ...
 subplot(5,4,19), hold on, plot(mean(pmq), 'k', 'LineWidth', 1), axis([0.75 3.25 -0.4 0.8])
 plot(pmq', 'LineWidth', 0.5, 'Color', [0.5 0.5 0.5 0.5]), 
 
-
-t = table(pmq(:,1), pmq(:,2), pmq(:,3),...
-'VariableNames',{'t0','t2','t4'});
+CMq = [1 1 1 0 1 0 0 1 1 1 1 1 1 0 0];
+t = table(CMq', pmq(:,1), pmq(:,2), pmq(:,3),...
+'VariableNames',{'CMq', 't0','t2','t4'});
 Time = [0 2 4]';
-rm = fitrm(t,'t0-t4','WithinDesign',Time);
+rm = fitrm(t,'t0-t4 ~ CMq','WithinDesign',Time);
 anovatbl = anova(rm)
 if helper.isnormal(pmq(:,1)) && helper.isnormal(pmq(:,2)) && helper.isnormal(pmq(:,3))
     disp('--opaque--')
@@ -193,6 +220,13 @@ xtickangle(30)
 ylabel('Avg r')
 xlabel(' ')
 
+
+CMm = [0 1 1 1 1 1 1 1 1 0 1 1 0 0 1 0];
+t = table(CMm', pmm(:,1), pmm(:,2), pmm(:,3),...
+'VariableNames',{'CMm', 't0','t2','t4'});
+Time = [0 2 4]';
+rm = fitrm(t,'t0-t4 ~ CMm','WithinDesign',Time);
+anovatbl = anova(rm)
 if helper.isnormal(pmm(:,1)) && helper.isnormal(pmm(:,2)) && helper.isnormal(pmm(:,3))
     disp('--mesh--')
     [~,p] = ttest2(pmm(:,1), pmm(:,2))

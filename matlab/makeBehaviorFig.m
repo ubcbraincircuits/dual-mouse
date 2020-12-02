@@ -1,8 +1,14 @@
 %% behaviour figure
 
+
+load('behavior_data.mat')
+
+
+fs = 28.815;
 sum_whisks = [];
 sum_fls = [];
 overlap = [];
+minute = round(60*fs);
 for i = 1:length(B.whisk.left)
     if ~isempty(B.whisk.left{i}) && i~=27
         i1 = B.times(i,1);
@@ -23,6 +29,9 @@ for i = 1:length(B.whisk.left)
         overlap = [overlap; 100*sum(tmp>1)/total_time];
     end
 end
+
+w_separate = sum_whisks;
+fl_separate = sum_fls;
 
 figure, 
 idx = 4;
@@ -78,6 +87,13 @@ for i = 1:length(B.whisk.left)
     end
 end
 
+w_together = sum_whisks;
+fl_together = sum_fls;
+
+if helper.isnormal(w_together) && helper.isnormal(w_separate)
+    [~,p2c] = ttest(w_separate, w_together)
+end
+
 subplot(4,3,6), axis equal, axis off, title('Social')
 A = [mean(sum_whisks) mean(sum_fls)]; I = mean(overlap);
 venn(A,I,'FaceColor',{'m','c'},'FaceAlpha',{0.6,0.6},'EdgeColor','None')
@@ -91,7 +107,7 @@ tog_ji = [];
 tog_ji_rr = [];
 sep_ji = [];
 for i = 1:35
-    if ~isempty(B.whisk.left{i}) && i~=27
+    if i~=15 && i~=27
 %         b_left = (B.whisk.left{i}(i1:i2) + B.FL.left{i}(i1:i2))>0;
 %         b_right = (B.whisk.right{i}(i1:i2) + B.FL.right{i}(i1:i2))>0;
 
@@ -112,9 +128,9 @@ boxplot([tog_ji_rr, sep_ji]), ylabel('Intersection Over Union'), axis([0.25 2.75
 xticklabels({'Social', 'Solo'});
 
 if helper.isnormal(tog_ji_rr) && helper.isnormal(sep_ji)
-    [p,h] = ttest(tog_ji_rr, sep_ji);
+    [~,p2e] = ttest(tog_ji_rr, sep_ji)
 else
-    [p,h] = signrank(tog_ji_rr, sep_ji);
+    [~,p2e] = signrank(tog_ji_rr, sep_ji);
 end
 
 
@@ -145,7 +161,7 @@ for i = 1:35
     
     [lags,tmp]=helper.CXCORR(single(l),single(r));
     
-    ctr = round(numel(tmp)/2)
+    ctr = round(numel(tmp)/2);
     tmp = circshift(tmp, ctr);
     xx = cat(1, xx, tmp);
 %     
@@ -176,7 +192,7 @@ for i = 1:35
 end
 
 if helper.isnormal(qq(:, ctr)) && helper.isnormal(xx(:,ctr))
-    [h,p] = ttest(qq(:,ctr), xx(:,ctr))
+    [~,p2d] = ttest(qq(:,ctr), xx(:,ctr))
 end
 
 

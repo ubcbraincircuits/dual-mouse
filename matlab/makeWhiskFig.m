@@ -1,7 +1,19 @@
 %% whisk triggered figure
+clc, clear
+
+load('mask.mat')
+load('behavior_data.mat')
+load('tforms.mat')
+load('GSdata.mat')
+load('self_together.mat')
+load('singleFrames.mat')
 
 
-
+fs = 28.815;
+CM = ['Y', 'Y', 'N', 'N', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', ...
+    'Y', 'Y', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'Y', ...
+    'Y', 'Y', 'Y', 'Y', 'N', 'Y', 'N', 'Y', 'N', 'N', ...
+    'Y', 'N', 'N', 'N', 'N'];
 mouseAvg = [];
 window = round(fs*2);
 durmax = 0.5;
@@ -47,7 +59,7 @@ for i = 1:length(CM)
 
 end
 
-%%
+
 
 
 cmbwcount =[];
@@ -101,7 +113,7 @@ for i = 1:length(CM)
     end
 end
 
-%%
+
 
 idxtmp = CM;
 idxtmp([15, 27]) = [];
@@ -124,7 +136,7 @@ end
 
 
 
-%% Trial average together
+% Trial average together
 
 cmmapsAvg(cmmapsAvg == 0) = nan;
 ncmmapsAvg(ncmmapsAvg==0) = nan;
@@ -186,7 +198,12 @@ subplot(4,3,9)
 p = mean(cmts(30:end,:));
 q = mean(ncmts(30:end,:));
 helper.uboxplot(p',q')
-title(['p=',num2str(ranksum(p,q))]),
+if helper.isnormal(p) && helper.isnormal(q)
+    [~,pp] = ttest2(p,q);
+    title(['p=',num2str(pp)])
+else
+    title(['p=',num2str(ranksum(p,q))])
+end
 ylabel('mean post-whisk \DeltaF/F_0 (z-score)')
 xticklabels({'CM', 'NCM'})
 
